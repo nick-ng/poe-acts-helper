@@ -8,7 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
+	"strconv"
+	"strings"
 )
 
 type DataItem struct {
@@ -31,15 +32,100 @@ type clientSettings struct {
 }
 
 var settings = map[string]clientSettings{
-	"stand_alone": clientSettings{
+	"stand_alone": {
 		LogPath:    "C:\\Program Files (x86)\\Grinding Gear Games\\Path of Exile\\logs\\Client.txt",
 		FirstLine:  "",
 		ByteOffset: 0},
 }
 
 var actsData = map[string]DataItem{
-	"stand_alone": DataItem{
+	"stand_alone": {
 		Zone: "Loading", Level: 0},
+}
+
+func updateActsData(poeClient string) int {
+	setting, exists := settings[poeClient]
+	if !exists {
+		return http.StatusNotFound
+	}
+
+	poeLogFile, err := os.OpenFile(setting.LogPath, os.O_RDONLY, 0666)
+	if err != nil {
+		poeLogFile.Close()
+		return http.StatusInternalServerError
+	}
+	defer poeLogFile.Close()
+
+	reader := bufio.NewReader(poeLogFile)
+	// check if same file
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		log.Println("error reading ", setting.LogPath, err)
+		return http.StatusInternalServerError
+
+	}
+
+	// new reader so we start from the start
+	reader = bufio.NewReader(poeLogFile)
+	if text == setting.FirstLine {
+		reader.Discard(setting.ByteOffset)
+	} else {
+		setting.FirstLine = text
+		setting.ByteOffset = 0
+	}
+
+	tempEntry, ok := actsData[poeClient]
+	zone := ""
+	level := 0
+	if ok {
+		zone = tempEntry.Zone
+		level = tempEntry.Level
+	}
+
+	keepGoing := true
+	bytesRead := 0
+	for keepGoing {
+		tempBytes, err := reader.ReadBytes('\n')
+		if err != nil {
+			keepGoing = false
+
+			if !errors.Is(err, io.EOF) {
+				log.Println("error:", err)
+			}
+
+			continue
+		}
+
+		setting.ByteOffset = setting.ByteOffset + len(tempBytes)
+		bytesRead = bytesRead + len(tempBytes)
+		tempLine := string(tempBytes)
+
+		zoneParts := strings.Split(tempLine, "You have entered ")
+		if len(zoneParts) > 1 {
+			temp := strings.TrimSpace(zoneParts[1])
+			zone = strings.TrimSuffix(temp, ".")
+		} else {
+			levelParts := strings.Split(tempLine, "is now level ")
+			if len(levelParts) > 1 {
+				temp := strings.TrimSpace(levelParts[1])
+				level, err = strconv.Atoi(temp)
+				if err != nil {
+					log.Println("error converting to integer ", temp, err)
+					level = 0
+				}
+			}
+		}
+	}
+
+	newEntry := DataItem{
+		Zone:  zone,
+		Level: level,
+	}
+
+	actsData[poeClient] = newEntry
+	settings[poeClient] = setting
+
+	return 0
 }
 
 func handleGetData(writer http.ResponseWriter, req *http.Request) {
@@ -56,8 +142,6 @@ func handleGetData(writer http.ResponseWriter, req *http.Request) {
 	writer.Write(jsonBytes)
 }
 
-var zoneRe = regexp.MustCompile(`You have entered (.+)\.$`)
-
 func handlePostData(writer http.ResponseWriter, req *http.Request) {
 	requestBody := DataRequest{}
 	decoder := json.NewDecoder(req.Body)
@@ -68,59 +152,7 @@ func handlePostData(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	setting, exists := settings[requestBody.PoeClient]
-	if !exists {
-		writer.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	poeLogFile, err := os.OpenFile(setting.LogPath, os.O_RDONLY, 0666)
-	if err != nil {
-		poeLogFile.Close()
-		writer.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer poeLogFile.Close()
-
-	reader := bufio.NewReader(poeLogFile)
-	// check if same file
-	text, err := reader.ReadString('\n')
-	if err != nil {
-		log.Println("error reading ", setting.LogPath, err)
-		return
-	}
-
-	// new reader so we start from the start
-	reader = bufio.NewReader(poeLogFile)
-	if text == setting.FirstLine {
-		reader.Discard(setting.ByteOffset)
-	} else {
-		setting.FirstLine = text
-		setting.ByteOffset = 0
-	}
-
-	keepGoing := true
-	for keepGoing {
-		tempBytes, err := reader.ReadBytes('\n')
-		if err != nil {
-			keepGoing = false
-
-			if !errors.Is(err, io.EOF) {
-				log.Println("error:", err)
-			}
-
-			continue
-		}
-
-		setting.ByteOffset = setting.ByteOffset + len(tempBytes)
-		tempLine := string(tempBytes)
-
-		foundStrings := zoneRe.FindStringSubmatch(tempLine)
-
-		if len(foundStrings) > 0 {
-			log.Println(foundStrings)
-		}
-	}
+	updateActsData(requestBody.PoeClient)
 
 	handleGetData(writer, req)
 }

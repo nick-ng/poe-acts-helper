@@ -7,7 +7,7 @@
 *.dll
 *.so
 *.dylib
-__debug.exe*
+__debug_bin.exe*
 
 # Test binary, built with `go test -c`
 *.test
