@@ -1,17 +1,40 @@
 <html>
 		<head>
 				<title>PoE Acts Helper</title>
-				<!-- get js here -->
+				<link rel="icon" href="/favicon.ico">
+				<script defer="defer" src="/main.js"></script>
+				<style>
+				body {
+						background-color: #002020;
+						color: #eeeeee;
+						font-family: sans-serif;
+				}
+
+				.current_zone_level {
+				}
+
+				.main_container {
+						display: grid;
+						grid-template-columns: 1fr 1fr 1fr;
+				}
+				</style>
 		</head>
 		<body>
+				<div class="current_zone_level">
+						<div>Zone: <span id="zone_display"></span></div>
+						<div>Level: <span id="level_display"></span></div>
+				</div>
 				<div class="main_container">
 						<section id="notes_section">
 						</section>
-						<section id="build_section">
-								<img id="build_image" class="build_image" />
-						</section>
 						<section id="zone_section">
 								<img id="zone_image" class="zone_image" />
+								<div id="zone_notes" class="notes"></div>
 						</section>
+						<section id="build_section">
+								<img id="build_image" class="build_image" />
+								<div id="build_notes" class="notes"></div>
+						</section>
+				</div>
 		</body>
 </html>
