@@ -17,6 +17,19 @@
 						display: grid;
 						grid-template-columns: 1fr 1fr 1fr;
 				}
+
+				.clickToCopy {
+						cursor: pointer;
+				}
+
+				.clickToCopy::before {
+						content: "Copy";
+						border: 1px solid #aaaaaa;
+						border-radius: 3px;
+						padding: 3px;
+						margin-right: 3px;
+						font-family: sans-serif;
+				}
 				</style>
 		</head>
 		<body>

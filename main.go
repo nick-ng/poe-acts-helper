@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -35,7 +36,13 @@ var settings = map[string]clientSettings{
 	"stand_alone": {
 		LogPath:    "C:\\Program Files (x86)\\Grinding Gear Games\\Path of Exile\\logs\\Client.txt",
 		FirstLine:  "",
-		ByteOffset: 0},
+		ByteOffset: 0,
+	},
+	"steam": {
+		LogPath:    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile\\logs\\Client.txt",
+		FirstLine:  "",
+		ByteOffset: 0,
+	},
 }
 
 var actsData = map[string]DataItem{
@@ -62,7 +69,6 @@ func updateActsData(poeClient string) int {
 	if err != nil {
 		log.Println("error reading ", setting.LogPath, err)
 		return http.StatusInternalServerError
-
 	}
 
 	// new reader so we start from the start
@@ -157,9 +163,37 @@ func handlePostData(writer http.ResponseWriter, req *http.Request) {
 	handleGetData(writer, req)
 }
 
+func handleGetHelperList(writer http.ResponseWriter, req *http.Request) {
+	dirEntries, err := os.ReadDir("static/helpers")
+	if err != nil {
+		log.Println("error listing helpers ", err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	helperPaths := []string{}
+	for _, dirEntry := range dirEntries {
+		fullPath := fmt.Sprintf("helpers/%s", dirEntry.Name())
+		helperPaths = append(helperPaths, fullPath)
+	}
+
+	jsonBytes, err := json.Marshal(helperPaths)
+	if err != nil {
+		log.Println("error converting acts data to json ", err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writer.Header().Add("Content-Type", "application/json; charset=utf-8")
+	writer.Header().Add("Cache-Control", "no-store")
+	writer.WriteHeader(http.StatusOK)
+	writer.Write(jsonBytes)
+}
+
 func main() {
 	http.HandleFunc("GET /data", handleGetData)
 	http.HandleFunc("POST /data", handlePostData)
+	http.HandleFunc("GET /helper", handleGetHelperList)
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)

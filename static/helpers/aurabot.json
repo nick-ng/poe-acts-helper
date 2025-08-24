@@ -1,0 +1,12 @@
+[
+		{
+		"zone": "Lioneye's Watch",
+		"maxLevel": 13,
+				"note": "<ul><li>Check links: <code>g-g-r|g-[gr]-g|r-g-g|g-g|g-r|r-g|Runn|rint</code></li></ul>",
+		"comment": "after finishing the way forward"},
+		{
+		"zone": "Lioneye's Watch",
+		"minLevel": 14,
+				"note": "<p>Buy gems: <code>\"shield charge|volley|precision|faster attacks|flame dash\"</code></p><ul><li>Shield Charge</li><li>Volley Support</li><li>Precision</li><li>Faster Attacks</li><li>Flame Dash</li></ul>",
+		"comment": "after finishing the way forward"}
+]
