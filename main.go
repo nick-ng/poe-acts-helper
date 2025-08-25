@@ -163,21 +163,21 @@ func handlePostData(writer http.ResponseWriter, req *http.Request) {
 	handleGetData(writer, req)
 }
 
-func handleGetHelperList(writer http.ResponseWriter, req *http.Request) {
-	dirEntries, err := os.ReadDir("static/helpers")
+func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
+	dirEntries, err := os.ReadDir("static/notes")
 	if err != nil {
-		log.Println("error listing helpers ", err)
+		log.Println("error listing notes ", err)
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	helperPaths := []string{}
+	notePaths := []string{}
 	for _, dirEntry := range dirEntries {
-		fullPath := fmt.Sprintf("helpers/%s", dirEntry.Name())
-		helperPaths = append(helperPaths, fullPath)
+		fullPath := fmt.Sprintf("/notes/%s", dirEntry.Name())
+		notePaths = append(notePaths, fullPath)
 	}
 
-	jsonBytes, err := json.Marshal(helperPaths)
+	jsonBytes, err := json.Marshal(notePaths)
 	if err != nil {
 		log.Println("error converting acts data to json ", err)
 		writer.WriteHeader(http.StatusInternalServerError)
@@ -193,7 +193,7 @@ func handleGetHelperList(writer http.ResponseWriter, req *http.Request) {
 func main() {
 	http.HandleFunc("GET /data", handleGetData)
 	http.HandleFunc("POST /data", handlePostData)
-	http.HandleFunc("GET /helper", handleGetHelperList)
+	http.HandleFunc("GET /note", handleGetNoteList)
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)

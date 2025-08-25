@@ -1,0 +1,36 @@
+[
+  {
+    "zones": ["The Twilight Strand", "Lioneye's Watch"],
+    "maxLevel": 7,
+    "notes": [
+      "Check links",
+      { "type": "click", "text": "g-g-r|g-[gr]-g|r-g-g|g-g|g-r|r-g|Runn|rint" },
+      "Ranger: Frost Blades",
+      "Scion: Any green",
+      "Iron Ring"
+    ],
+    "comment": "first town visit"
+  },
+  {
+    "zones": ["Lioneye's Watch"],
+    "minLevel": 5,
+    "maxLevel": 13,
+    "notes": [
+      "Heavy Belt",
+      "Make Sapphire Ring"
+    ]
+  },
+  {
+    "zones": ["Lioneye's Watch"],
+    "minLevel": 14,
+    "maxLevel": 33,
+    "notes": [
+      "Buy gems for E-conc swap",
+      {
+        "type": "click",
+        "text": "\"shield charge|volley|precision|faster attacks|flame dash\""
+      }
+    ],
+    "comment": "after finishing the way forward"
+  }
+]
