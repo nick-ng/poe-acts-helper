@@ -309,6 +309,19 @@ func updateActsData(poeClient string) int {
 
 	}
 
+	actsData[poeClient] = actsDatum
+	settings[poeClient] = setting
+
+	updateActsNote(poeClient)
+	return 0
+}
+
+func updateActsNote(poeClient string) {
+	actsDatum, ok := actsData[poeClient]
+	if !ok {
+		return
+	}
+
 	fullMd := ""
 	matchFound := false
 	for _, note := range notes {
@@ -324,9 +337,29 @@ func updateActsData(poeClient string) int {
 	}
 
 	actsData[poeClient] = actsDatum
-	settings[poeClient] = setting
+}
 
-	return 0
+func handleReset(writer http.ResponseWriter, req *http.Request) {
+	requestBody := DataRequest{}
+	decoder := json.NewDecoder(req.Body)
+	err := decoder.Decode(&requestBody)
+	if err != nil {
+		log.Println("error reading parameters ", err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	poeClient := requestBody.PoeClient
+	actsDatum, ok := actsData[poeClient]
+	if !ok {
+		return
+	}
+
+	actsDatum.Level = 1
+	actsDatum.Zone = "The Twilight Strand"
+	actsData[poeClient] = actsDatum
+
+	updateActsNote(poeClient)
 }
 
 func handleGetData(writer http.ResponseWriter, req *http.Request) {
@@ -388,6 +421,7 @@ func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
 func main() {
 	http.HandleFunc("GET /data", handleGetData)
 	http.HandleFunc("POST /data", handlePostData)
+	http.HandleFunc("POST /reset", handleReset)
 	http.HandleFunc("GET /note", handleGetNoteList)
 
 	fs := http.FileServer(http.Dir("./static"))

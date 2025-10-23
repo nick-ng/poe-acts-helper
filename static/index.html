@@ -21,10 +21,15 @@
         font-family: mono;
       }
 
-      .timer_controls {}
+      .timer_controls {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        justify-content: space-between;
+      }
 
       .timer_controls button {
-        display: block;
+        flex-grow: 1;
       }
 
       table {
@@ -45,7 +50,7 @@
     <div class="timer">
       <div id="timer_display">00:00:00</div>
       <div class="timer_controls">
-        <button id="timer_reset">Reset</button>
+        <button id="timer_stop">Stop</button>
         <button id="timer_start">Start</button>
         <button id="timer_countdown">Countdown</button>
       </div>
