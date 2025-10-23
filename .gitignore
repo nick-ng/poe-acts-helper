@@ -8,6 +8,7 @@
 *.so
 *.dylib
 __debug_bin.exe*
+__debug_bin*
 
 # Test binary, built with `go test -c`
 *.test

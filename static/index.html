@@ -8,45 +8,50 @@
         background-color: #002020;
         color: #eeeeee;
         font-family: sans-serif;
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
       }
 
-      .current_zone_level {}
-
-      .main_container {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-
-      .clickToCopy {
-        display: block;
-        cursor: pointer;
-      }
-
-      .clickToCopy::before {
-        content: "Copy";
+      #timer_display {
+        font-size: 36pt;
+        padding: 8px;
         border: 1px solid #aaaaaa;
-        border-radius: 3px;
-        padding: 3px;
-        margin-right: 3px;
-        font-family: sans-serif;
+        margin: 5px;
+        font-family: mono;
+      }
+
+      .timer_controls {}
+
+      .timer_controls button {
+        display: block;
+      }
+
+      table {
+        border-collapse: collapse;
+      }
+
+      table + table {
+        margin-top: 8px;
+      }
+
+      #notes_section td, #notes_section th {
+        border: 1px solid #aaaaaa;
+        padding: 1px 5px;
       }
     </style>
   </head>
   <body>
-    <div class="current_zone_level">
-      <div>Zone: <span id="zone_display"></span></div>
-      <div>Level: <span id="level_display"></span></div>
+    <div class="timer">
+      <div id="timer_display">00:00:00</div>
+      <div class="timer_controls">
+        <button id="timer_reset">Reset</button>
+        <button id="timer_start">Start</button>
+        <button id="timer_countdown">Countdown</button>
+      </div>
     </div>
     <div class="main_container">
       <section id="notes_section"></section>
-      <section id="zone_section">
-        <img id="zone_image" class="zone_image" />
-        <div id="zone_notes" class="notes"></div>
-      </section>
-      <section id="build_section">
-        <img id="build_image" class="build_image" />
-        <div id="build_notes" class="notes"></div>
-      </section>
     </div>
   </body>
 </html>
