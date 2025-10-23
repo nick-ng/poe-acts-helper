@@ -8,9 +8,16 @@
         background-color: #002020;
         color: #eeeeee;
         font-family: sans-serif;
-        display: flex;
-        flex-direction: row;
-        gap: 8px;
+      }
+
+      .timer {
+        display: inline-block;
+        margin-right: 8px;
+        vertical-align: top;
+      }
+
+      .main_container {
+        display: inline-block;
       }
 
       #timer_display {
@@ -37,12 +44,27 @@
       }
 
       table + table {
-        margin-top: 8px;
+        /* margin-top: 8px; */
       }
 
       #notes_section td, #notes_section th {
         border: 1px solid #aaaaaa;
         padding: 1px 5px;
+      }
+
+      #notes_section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        max-height: 99vh;
+        gap: 8px;
+      }
+
+      #notes_section * {
+        margin-top: 0;
+        margin-bottom: 0;
       }
     </style>
   </head>

@@ -85,8 +85,6 @@ window.addEventListener("load", () => {
     fetch("/reset", {
       method: "POST",
       body: JSON.stringify({ poe_client: client }),
-    }).then(() => {
-      handleUpdate();
     });
 
     updateTimer();
@@ -102,8 +100,6 @@ window.addEventListener("load", () => {
     fetch("/reset", {
       method: "POST",
       body: JSON.stringify({ poe_client: client }),
-    }).then(() => {
-      handleUpdate();
     });
 
     updateTimer();

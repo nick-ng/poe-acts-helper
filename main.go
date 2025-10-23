@@ -92,6 +92,7 @@ var settings = map[string]clientSettings{
 	},
 }
 
+// @todo(nick-ng): move to separate file
 var notes = []Note{
 	{
 		Zones: []string{
@@ -112,7 +113,6 @@ var notes = []Note{
 			"The Ship Graveyard Cave",
 			"The Cavern of Wrath",
 			"The Cavern of Anger",
-			"Mervil's Lair",
 		},
 		MinLevel: 0,
 		MaxLevel: 20,
@@ -150,7 +150,7 @@ var notes = []Note{
 	},
 	{
 		Zones: []string{
-			"Mervil's Lair",
+			"The Cavern of Anger",
 			"The Southern Forest",
 			"The Forest Encampment",
 			"The Old Fields",
@@ -206,6 +206,91 @@ var notes = []Note{
 | Highest Level | Everyone Else |
 | :------------ | :------------ |
 | Vaal Oversoul | XP            |
+`,
+	},
+	{
+		Zones: []string{
+			"Ancient Pyramid",
+			"The City of Sarn",
+			"The Sarn Encampment",
+			"The Slums",
+			"The Crematorium",
+			"The Sewers",
+			"The Marketplace",
+			"The Catacombs",
+			"The Battlefront",
+			"Solaris Temple Level 1",
+			"Solaris Temple Level 2",
+			"The Docks",
+			"The Ebony Barracks",
+			"Lunaris Temple Level 1",
+			"Lunaris Temple Level 2",
+			"The Imperial Gardens",
+			"The Sceptre of God",
+			"The Upper Sceptre of God",
+		},
+		MinLevel: 0,
+		MaxLevel: 45,
+		MdNote: `
+## Act 3
+
+| Highest Level  | Everyone Else |
+| :------------- | :------------ |
+| Crematorium WP | XP            |
+
+| David             | Jacky  | Mark | Nick          |
+| :---------------- | :----- | :--- | :------------ |
+| Crematorium Trial | Tolman | XP   | Sewers Portal |
+
+### Chain 3.1
+
+- Swirl Jacky => Click Tolman
+- Portal David => Crematorium trial
+- Turn in Bracelet, get Thief Tools
+- Portal Nick => Sewers
+
+| All         |
+| :---------- |
+| Solo Sewers |
+
+| Highest Level  | Everyone Else |
+| :------------- | :------------ |
+| Marketplace WP | XP            |
+
+| David | Jacky           | Mark | Nick            |
+| :---- | :-------------- | :--- | :-------------- |
+| XP    | Ribbon Spool WP | XP   | Catacombs Trial |
+| Docks | Dialla WP       | XP   | XP              |
+
+### Chain 3.2
+
+- Swirl David => Thaumatic Sulfite
+- Portal Nick => Catacombs trial
+- Swirl Jacky => Take Infernal Talc
+- Sewers => Burn Blockage => Get WP
+
+| Highest Level     | Everyone Else                             |
+| :---------------- | :---------------------------------------- |
+| General Gravicius | Wait for General Gravicius tag then swirl |
+
+| David | Jacky                | Mark | Nick       |
+| :---- | :------------------- | :--- | :--------- |
+| Piety | Explosive Concoction | XP   | Tower Door |
+
+### Chain 3.3
+
+- Swirl David => Kill Piety
+- Portal Nick => Tower door
+
+| Highest Level | Nick          | Everyone Else |
+| :------------ | :------------ | :------------ |
+| Dominus       | Gardens trial | XP            |
+
+### Chain 3.4
+
+- Swirl <someone> => Dominus
+- Aqueduct WP => Garden Trial
+
 `,
 	},
 }
