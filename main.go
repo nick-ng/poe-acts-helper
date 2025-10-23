@@ -9,13 +9,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type DataItem struct {
-	Zone  string `json:"zone"`
-	Level int    `json:"level"`
+	LogsPath     string `json:"-"`
+	Zone         string `json:"zone"`
+	Level        int    `json:"level"`
+	HtmlNote     string `json:"htmlNote"`
+	LastUpdateMs int64  `json:"lastUpdateMs"`
 }
 
 type DataResponse struct {
@@ -27,27 +35,93 @@ type DataRequest struct {
 }
 
 type clientSettings struct {
-	LogPath    string
-	FirstLine  string
-	ByteOffset int
+	LogPath      string
+	LinuxLogPath string
+	FirstLine    string
+	ByteOffset   int
 }
 
 var settings = map[string]clientSettings{
 	"stand_alone": {
-		LogPath:    "C:\\Program Files (x86)\\Grinding Gear Games\\Path of Exile\\logs\\Client.txt",
-		FirstLine:  "",
-		ByteOffset: 0,
+		LogPath:      "C:\\Program Files (x86)\\Grinding Gear Games\\Path of Exile\\logs\\Client.txt",
+		LinuxLogPath: "",
+		FirstLine:    "",
+		ByteOffset:   0,
 	},
 	"steam": {
-		LogPath:    "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile\\logs\\Client.txt",
-		FirstLine:  "",
-		ByteOffset: 0,
+		LogPath:      "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Path of Exile\\logs\\Client.txt",
+		LinuxLogPath: "",
+		FirstLine:    "",
+		ByteOffset:   0,
 	},
+}
+
+func GetPoe1SteamLogPath() string {
+	if runtime.GOOS == "windows" {
+		poe1Dir := filepath.Join("C:", "Program Files (x86)", "Steam", "steamapps", "common", "Path of Exile", "logs")
+		return poe1Dir
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("\nCouldn't get home directory", err)
+		os.Exit(1)
+	}
+
+	poe1Dir := filepath.Join(homeDir, ".steam", "steam", "steamapps", "common", "Path of Exile", "logs")
+	return poe1Dir
+}
+
+func GetPoe1StandAlonePath() string {
+	if runtime.GOOS == "windows" {
+		poe1Dir := filepath.Join("C:", "Program Files (x86)", "Grinding Gear Games", "Path of Exile", "logs")
+		return poe1Dir
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("\nCouldn't get home directory", err)
+		os.Exit(1)
+	}
+
+	poe1Dir := filepath.Join(homeDir, "Games", "path-of-exile", "drive_c", "Program Files (x86)", "Grinding Gear Games", "Path of Exile", "logs")
+	return poe1Dir
 }
 
 var actsData = map[string]DataItem{
 	"stand_alone": {
-		Zone: "Loading", Level: 0},
+		LogsPath: GetPoe1StandAlonePath(),
+		Zone:     "Loading",
+		Level:    1,
+	},
+	"steam": {
+		LogsPath: GetPoe1SteamLogPath(),
+		Zone:     "Loading",
+		Level:    1,
+	},
+}
+
+func parseLine(logLine string, dataItem *DataItem) (string, int) {
+	zoneParts := strings.Split(logLine, "You have entered ")
+	if len(zoneParts) > 1 {
+		temp := strings.TrimSpace(zoneParts[1])
+		dataItem.Zone = strings.TrimSuffix(temp, ".")
+		dataItem.LastUpdateMs = time.Now().UnixMilli()
+	} else {
+		levelParts := strings.Split(logLine, "is now level ")
+		if len(levelParts) > 1 {
+			temp := strings.TrimSpace(levelParts[1])
+			tempLevel, err := strconv.Atoi(temp)
+			if err != nil {
+				log.Println("error converting to integer ", temp, err)
+			} else {
+				dataItem.Level = tempLevel
+				dataItem.LastUpdateMs = time.Now().UnixMilli()
+			}
+		}
+	}
+
+	return dataItem.Zone, dataItem.Level
 }
 
 func updateActsData(poeClient string) int {
@@ -188,6 +262,119 @@ func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Add("Cache-Control", "no-store")
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(jsonBytes)
+}
+
+func listenToLogs() {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Println("error creating watcher", err)
+	}
+	defer watcher.Close()
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Has(fsnotify.Write) {
+					for _, actsDatum := range actsData {
+						if strings.HasPrefix(event.Name, actsDatum.LogsPath) {
+							fmt.Println(event.Name)
+						}
+					}
+					if !strings.HasPrefix(event.Name, path1) {
+						processAllFilters(path1, path2)
+						return
+					}
+					if strings.HasSuffix(event.Name, ".filter") {
+						filterPath := event.Name
+						fmt.Printf("%s modified, reprocessing... ", filterPath)
+						start := time.Now()
+						temp := strings.Split(filterPath, "/")
+						filterName := temp[1]
+						filter, filterFlags, errList := processFilter(filterPath, false)
+
+						filterData := []byte(filter)
+
+						outputFilterPath := filepath.Join(OUTPUT_FILTERS_PATH, filterName)
+
+						if filterName != "example.filter" && filterName != "example2.filter" {
+							if filterFlags.Game == "poe2" {
+								poe2FilterName := fmt.Sprintf("poe2-%s", filterName)
+								outputFilterPath = filepath.Join(OUTPUT_FILTERS_PATH, poe2FilterName)
+
+								gameFilterPath := utils.GetPoe2SteamPath(filterName)
+								err = os.WriteFile(gameFilterPath, filterData, 0666)
+								if err != nil {
+									fmt.Println("\nError writing filter to PoE 2 directory", filterName, err)
+									return
+								}
+							} else {
+								gameFilterPath := utils.GetPoe1SteamPath(filterName)
+								err = os.WriteFile(gameFilterPath, filterData, 0666)
+								if err != nil {
+									fmt.Println("\nError writing filter to PoE 1, Steam directory", filterName, err)
+									return
+								}
+
+								gameFilterPath = utils.GetPoe1LutrisPath(filterName)
+								err = os.WriteFile(gameFilterPath, filterData, 0666)
+								if err != nil {
+									fmt.Println("\nError writing filter to PoE 1, Lutris Steam directory", filterName, err)
+									return
+								}
+							}
+						}
+
+						err := os.WriteFile(outputFilterPath, filterData, 0666)
+						if err != nil {
+							fmt.Println("\nError writing filter to output-filters", filterName, err)
+							return
+						}
+
+						copySounds()
+
+						if len(errList) > 1 {
+							fmt.Printf("done with %d errors\n", len(errList))
+							for err := range errList {
+								fmt.Println(err)
+							}
+						} else if len(errList) == 1 {
+							fmt.Println("done with 1 error")
+							fmt.Println(errList[0])
+						} else {
+							elapsed := time.Since(start)
+							fmt.Printf("done in %d ms\n", int(elapsed.Milliseconds()))
+						}
+					}
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				fmt.Println("error:", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(path1)
+	if err != nil {
+		fmt.Println("error adding path to watch", err)
+	}
+
+	err = watcher.Add(baseFiltersPath)
+	if err != nil {
+		fmt.Println("error adding path to watch", err)
+	}
+
+	err = watcher.Add(thirdPartyFiltersPath)
+	if err != nil {
+		fmt.Println("error adding path to watch", err)
+	}
+
+	<-make(chan struct{})
 }
 
 func main() {
