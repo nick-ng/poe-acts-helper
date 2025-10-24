@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
@@ -503,17 +504,50 @@ func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
 	writer.Write(jsonBytes)
 }
 
+func handleSSE(writer http.ResponseWriter, req *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+
+	writer.Header().Set("Content-Type", "text/event-stream")
+	writer.Header().Set("Cache-Control", "no-cache")
+	writer.Header().Set("Connection", "keep-alive")
+
+	flusher, ok := writer.(http.Flusher)
+	if !ok {
+		fmt.Println("error initialising flusher")
+	}
+
+	for i := 0; i < 300; i++ {
+		select {
+		case <-req.Context().Done():
+			{
+				fmt.Println("connection closed")
+				return
+			}
+		default:
+			{
+				fmt.Println("sending event", i)
+				fmt.Fprintf(writer, "test\n\n")
+				flusher.Flush()
+				time.Sleep(2 * time.Second)
+			}
+		}
+	}
+}
+
 func main() {
-	http.HandleFunc("GET /data", handleGetData)
-	http.HandleFunc("POST /data", handlePostData)
-	http.HandleFunc("POST /reset", handleReset)
-	http.HandleFunc("GET /note", handleGetNoteList)
+	router := http.NewServeMux()
+	router.HandleFunc("GET /data", handleGetData)
+	router.HandleFunc("POST /data", handlePostData)
+	router.HandleFunc("POST /reset", handleReset)
+	router.HandleFunc("GET /note", handleGetNoteList)
+	router.HandleFunc("/events", handleSSE)
 
 	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fs)
+	router.Handle("/", fs)
 
 	log.Println("Listening on :3232")
-	err := http.ListenAndServe(":3232", nil)
+	err := http.ListenAndServe(":3232", router)
 	if err != nil {
 		log.Fatal(err)
 	}

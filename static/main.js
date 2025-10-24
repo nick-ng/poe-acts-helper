@@ -105,5 +105,16 @@ window.addEventListener("load", () => {
     updateTimer();
   });
 
-  handleUpdate();
+  // handleUpdate();
+
+  const listenToNotes = new EventSource("/events");
+  listenToNotes.addEventListener("message", (event) => {
+    console.log("hi", new Date());
+    console.log(event);
+  });
+
+  setTimeout(() => {
+    console.log("ready state", listenToNotes.readyState);
+    console.log("url", listenToNotes.url);
+  }, 1000);
 });
