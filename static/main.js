@@ -107,14 +107,8 @@ window.addEventListener("load", () => {
 
   // handleUpdate();
 
-  const listenToNotes = new EventSource("/events");
+  const listenToNotes = new EventSource(`/events?client=${client}`);
   listenToNotes.addEventListener("message", (event) => {
-    console.log("hi", new Date());
-    console.log(event);
+    console.log(event.data);
   });
-
-  setTimeout(() => {
-    console.log("ready state", listenToNotes.readyState);
-    console.log("url", listenToNotes.url);
-  }, 1000);
 });
