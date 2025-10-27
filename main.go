@@ -367,6 +367,7 @@ func updateActsData(poeClient string) int {
 		return http.StatusInternalServerError
 	}
 
+	// @todo(nick-ng): handle if the file gets deleted/remade
 	// new reader so we start from the start
 	reader = bufio.NewReader(poeLogFile)
 	if text == setting.FirstLine {
@@ -431,6 +432,10 @@ func updateActsNote(poeClient string) {
 	}
 
 	actsData[poeClient] = actsDatum
+
+	if poeClient == "steam" {
+		pushSteamHtml(actsData["steam"].HtmlNote)
+	}
 }
 
 func handleReset(writer http.ResponseWriter, req *http.Request) {
@@ -559,9 +564,6 @@ func listenToLogs() {
 							fmt.Println(event.Name)
 							updateActsData(client)
 
-							if client == "steam" {
-								pushSteamHtml(actsData["steam"].HtmlNote)
-							}
 						}
 					}
 				}
@@ -633,6 +635,10 @@ func handleSSE(writer http.ResponseWriter, req *http.Request) {
 
 func main() {
 	go listenToLogs()
+
+	for client := range settings {
+		updateActsData(client)
+	}
 
 	router := http.NewServeMux()
 	router.HandleFunc("GET /data", handleGetData)
