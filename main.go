@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gomarkdown/markdown"
@@ -47,6 +48,12 @@ type clientSettings struct {
 	FirstLine  string
 	ByteOffset int
 }
+
+var steamListeners map[int64]chan string = make(map[int64]chan string)
+var listenersLock sync.RWMutex
+
+var lastSteamHtml string = ""
+var lastSteamHtmlLock sync.RWMutex
 
 func GetPoe1SteamLogPath() string {
 	if runtime.GOOS == "windows" {
@@ -504,38 +511,91 @@ func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
 	writer.Write(jsonBytes)
 }
 
+func pushSteamHtml(newHtml string) {
+	lastSteamHtmlLock.Lock()
+	lastSteamHtml = newHtml
+	lastSteamHtmlLock.Unlock()
+	// fan out
+	listenersLock.RLock()
+	defer listenersLock.RUnlock()
+
+	// fmt.Println("listeners", listeners)
+	for id, listener := range steamListeners {
+
+		fmt.Println("listener", listener)
+		select {
+		case listener <- newHtml:
+			{
+				fmt.Println("sent steam html to", id)
+			}
+		default:
+			{
+				fmt.Println("channel not open", id)
+			}
+		}
+
+	}
+}
+
 func handleSSE(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	writer.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+
+	flusher, ok := writer.(http.Flusher)
+	if !ok {
+		fmt.Println("error initialising flusher")
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	writer.Header().Set("Content-Type", "text/event-stream")
 	writer.Header().Set("Cache-Control", "no-cache")
 	writer.Header().Set("Connection", "keep-alive")
 
-	flusher, ok := writer.(http.Flusher)
-	if !ok {
-		fmt.Println("error initialising flusher")
-	}
+	listenerId := time.Now().UnixNano()
+	htmlChannel := make(chan string)
 
-	for i := 0; i < 300; i++ {
-		select {
-		case <-req.Context().Done():
-			{
-				fmt.Println("connection closed")
+	listenersLock.Lock()
+	steamListeners[listenerId] = htmlChannel
+	listenersLock.Unlock()
+
+	go func() {
+		for {
+			newHtml := <-steamListeners[listenerId]
+			listenersLock.RLock()
+			_, ok := steamListeners[listenerId]
+			listenersLock.RUnlock()
+			if !ok {
 				return
 			}
-		default:
-			{
-				fmt.Println("sending event", i)
-				fmt.Fprintf(writer, "test\n\n")
-				flusher.Flush()
-				time.Sleep(2 * time.Second)
-			}
+			fmt.Fprintf(writer, "data: %s\n\n", newHtml)
+			flusher.Flush()
 		}
-	}
+	}()
+
+	lastSteamHtmlLock.RLock()
+	htmlChannel <- lastSteamHtml
+	lastSteamHtmlLock.RUnlock()
+
+	<-req.Context().Done()
+
+	listenersLock.Lock()
+	delete(steamListeners, listenerId)
+	listenersLock.Unlock()
+
+	htmlChannel <- "done"
 }
 
 func main() {
+	go func() {
+		for i := range 1000 {
+			message := fmt.Sprintf("test %d", i)
+			pushSteamHtml(message)
+			fmt.Println(message)
+			time.Sleep(2 * time.Second)
+		}
+	}()
+
 	router := http.NewServeMux()
 	router.HandleFunc("GET /data", handleGetData)
 	router.HandleFunc("POST /data", handlePostData)
