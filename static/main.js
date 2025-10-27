@@ -96,7 +96,7 @@ window.addEventListener("load", () => {
 
     const paramsString = window.location.search;
     const searchParams = new URLSearchParams(paramsString);
-    const client = searchParams.get("client") || "stand_alone";
+    const client = searchParams.get("client") || "steam";
     fetch("/reset", {
       method: "POST",
       body: JSON.stringify({ poe_client: client }),
@@ -107,8 +107,11 @@ window.addEventListener("load", () => {
 
   // handleUpdate();
 
+  const paramsString = window.location.search;
+  const searchParams = new URLSearchParams(paramsString);
+  const client = searchParams.get("client") || "steam";
   const listenToNotes = new EventSource(`/events?client=${client}`);
   listenToNotes.addEventListener("message", (event) => {
-    console.log(event.data);
+    notesSectionEl.innerHTML = event.data;
   });
 });

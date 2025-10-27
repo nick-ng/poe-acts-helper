@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
@@ -512,8 +513,9 @@ func handleGetNoteList(writer http.ResponseWriter, req *http.Request) {
 }
 
 func pushSteamHtml(newHtml string) {
+	safeHtml := strings.ReplaceAll(newHtml, "\n", " ")
 	lastSteamHtmlLock.Lock()
-	lastSteamHtml = newHtml
+	lastSteamHtml = safeHtml
 	lastSteamHtmlLock.Unlock()
 	// fan out
 	listenersLock.RLock()
@@ -524,7 +526,7 @@ func pushSteamHtml(newHtml string) {
 
 		fmt.Println("listener", listener)
 		select {
-		case listener <- newHtml:
+		case listener <- safeHtml:
 			{
 				fmt.Println("sent steam html to", id)
 			}
@@ -535,6 +537,49 @@ func pushSteamHtml(newHtml string) {
 		}
 
 	}
+}
+
+func listenToLogs() {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Println("error creating watcher", err)
+	}
+	defer watcher.Close()
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Has(fsnotify.Write) {
+					for client, setting := range settings {
+						if strings.HasPrefix(event.Name, setting.LogPath) {
+							fmt.Println(event.Name)
+							updateActsData(client)
+
+							if client == "steam" {
+								pushSteamHtml(actsData["steam"].HtmlNote)
+							}
+						}
+					}
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				fmt.Println("error:", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(GetPoe1SteamLogPath())
+	if err != nil {
+		fmt.Println("error adding path to watch", err)
+	}
+
+	<-make(chan struct{})
 }
 
 func handleSSE(writer http.ResponseWriter, req *http.Request) {
@@ -587,14 +632,7 @@ func handleSSE(writer http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	go func() {
-		for i := range 1000 {
-			message := fmt.Sprintf("test %d", i)
-			pushSteamHtml(message)
-			fmt.Println(message)
-			time.Sleep(2 * time.Second)
-		}
-	}()
+	go listenToLogs()
 
 	router := http.NewServeMux()
 	router.HandleFunc("GET /data", handleGetData)
