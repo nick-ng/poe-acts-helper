@@ -9,6 +9,7 @@
 *.dylib
 __debug_bin.exe*
 __debug_bin*
+poe-acts-helper
 
 # Test binary, built with `go test -c`
 *.test

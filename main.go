@@ -302,6 +302,50 @@ var notes = []Note{
 
 `,
 	},
+	{
+		Zones: []string{
+			"The Upper Sceptre of God",
+			"The Aqueduct",
+			"Higate",
+			"The Dried Lake",
+			"The Mines Level 1",
+			"The Mines Level 2",
+			"The Crystal Veins",
+			"Kaom's Dream",
+			"Kaom's Stronghold",
+			"Daresso's Dream",
+			"The Grand Arena",
+			"Belly of the Beast Level 1",
+			"Belly of the Beast Level 2",
+			"The Harvest",
+		},
+		MinLevel: 0,
+		MaxLevel: 55,
+		MdNote: `
+## Act 4
+
+| Highest Level | Everyone Else   |
+| :------------ | :-------------- |
+| Voll          | XP => Kill Voll |
+
+| David                 | Jacky                  | Mark             | Nick            |
+| :-------------------- | :--------------------- | :--------------- | :-------------- |
+| XP                    | Normal Lab - Green Gem | Spirit => Portal | XP              |
+| Replace Mark's Portal | David's Portal         | Kaom's Dream     | Daresso's Dream |
+
+### Chain 4.1
+
+- Swirl Mark => Kill Kaom
+- Portal Nick => Kill Daresso
+
+| David         | Jacky            | Mark          | Nick          |
+| :------------ | :--------------- | :------------ | :------------ |
+| Normal Lab    | Piety => Portal  | Normal Lab    | Normal Lab    |
+| Talk to Piety | Malachai Phase 1 | Talk to Piety | Talk to Piety |
+| Kill Malachai | Kill Malachai    | Kill Malachai | Kill Malachai |
+
+`,
+	},
 }
 
 var actsData = map[string]DataItem{
