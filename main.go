@@ -433,7 +433,7 @@ func updateActsNote(poeClient string) {
 
 	actsData[poeClient] = actsDatum
 
-	if poeClient == "steam" {
+	if matchFound && poeClient == "steam" {
 		pushSteamHtml(actsData["steam"].HtmlNote)
 	}
 }
