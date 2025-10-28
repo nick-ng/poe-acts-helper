@@ -346,6 +346,61 @@ var notes = []Note{
 
 `,
 	},
+	{
+		Zones: []string{
+			"The Harvest",
+			"The Ascent",
+			"The Slave Pens",
+			"Overseer's Tower",
+			"The Control Blocks",
+			"Oriath Square",
+			"The Templar Courts",
+			"The Chamber of Innocence",
+			"The Torched Courts",
+			"The Ruined Square",
+			"The Reliquary",
+			"The Ossuary",
+			"The Cathedral Rooftop",
+		},
+		MinLevel: 0,
+		MaxLevel: 55,
+		MdNote: `
+## Act 5
+
+| All                 |
+| :------------------ |
+| Solo Ascent         |
+| Solo Slave Pens     |
+| Solo Control Blocks |
+
+| Highest Level        | Everyone Else                           |
+| :------------------- | :-------------------------------------- |
+| Portal at Door       | XP                                      |
+| Chamber of Innocence | Open Door => Swirl Chamber of Innocence |
+| Level 42             | XP                                      |
+| Innocence            | XP                                      |
+
+Chain 5.1
+
+- Innocence
+
+| Highest Level    | Second Highest     | Everyone Else |
+| :--------------- | :----------------- | :------------ |
+| Ruined Square WP | XP                 | XP            |
+| Ossuary          | Portal at Roof Top | XP            |
+| Kitava           | Reliquary          | Reliquary     |
+
+Chain 5.2
+
+- Swirl Highest Level before "You have been permanently weakend by Kitava's
+  cruel affliction"
+
+| Kitava Runner       | Everyone Else     |
+| :------------------ | :---------------- |
+| Reliquary Portal(s) | Sail to Wraeclast |
+
+`,
+	},
 }
 
 var actsData = map[string]DataItem{
